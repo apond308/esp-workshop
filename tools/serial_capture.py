@@ -96,10 +96,18 @@ def open_port(port: str, baud: int) -> serial.Serial:
 def hard_reset(s: serial.Serial) -> None:
     # EN/reset via RTS with IO9/IO0 released (DTR low): works for native USB-Serial/JTAG and for
     # the usual two-transistor auto-reset circuit on USB-UART boards.
+    # DTR is re-written next to every RTS change and there is a settle delay after release: on Windows, line-state
+    # changes are only applied reliably when RTS is written. Measured on a C3 SuperMini Plus (5 tries each):
+    # plain "rts=True; sleep; rts=False" (also what esptool does) rebooted 0/5, this sequence 5/5.
+    s.dtr = False
+    s.rts = False
+    time.sleep(0.05)
     s.dtr = False
     s.rts = True
     time.sleep(0.2)
+    s.dtr = False
     s.rts = False
+    time.sleep(0.2)
 
 
 def decode(addresses, elf, addr2line):

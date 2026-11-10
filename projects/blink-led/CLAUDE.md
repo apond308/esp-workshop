@@ -3,8 +3,8 @@
 Workshop-wide rules and the `esp.py` command reference are in the repo root `CLAUDE.md`. Read that first.
 
 ## Goal
-Find out how the onboard LED on the SuperMini Plus is wired (which GPIO, active-low or active-high). The firmware
-drives GPIO8 low for 2 s, then high for 2 s, forever, logging each level (`alive: cycle N GPIO8 = LOW|HIGH`).
+Blink the SuperMini Plus's onboard LED at 1 Hz. This is the simplest "hello hardware" project and the reference for
+GPIO output on this board. (It started as a probe that found the LED is on GPIO8 and active-high.)
 
 ## Hardware
 - **Board:** TENSTAR ESP32-C3 SuperMini Plus
@@ -14,10 +14,11 @@ drives GPIO8 low for 2 s, then high for 2 s, forever, logging each level (`alive
 
 | GPIO | Connected to | Notes |
 |---|---|---|
-| | | |
+| 8 | Onboard LED | Active-HIGH (HIGH = on). Strapping pin, but fine as an output after boot |
 
 ## Status
-- _What works, what's next, known issues. Keep this current at the end of each session._
+- 2026-11-10: LED wiring verified by eye with the probe version (on when GPIO8 HIGH). 1 Hz blink version flashed;
+  serial log shows `alive: blink N` every 5 blinks.
 
 ## Project-specific notes
 - _Quirks, decisions, measurements. Move anything useful beyond this project into `docs/`._

@@ -17,6 +17,13 @@ Format: `- **YYYY-MM-DD, <topic>** (<board/project>): symptom → cause → fix.
   `pnputil /remove-device "USB\VID_303A&PID_1001&MI_02\<instance>"` then `pnputil /scan-devices`. Check with
   `esp.py doctor` (it now tests for this) or `DEVPKEY_Device_DriverInfPath` = `oem*.inf` (libwdi/Espressif), not `winusb.inf`.
 
+- **2026-11-10, Windows: serial `--reset` silently did nothing on the C3's native USB** (SuperMini Plus): `monitor
+  --reset` showed uptime still counting (`I (466283) ...`) because the DTR/RTS reset pulse never reached the chip.
+  Measured over 5 tries each: plain `rts=True; sleep; rts=False` (esptool's own HardReset) rebooted 0/5; re-writing
+  DTR=False around each RTS change plus a settle delay after release rebooted 5/5. The earlier resets that "worked"
+  only did so right after esptool had flashed. Fixed in `serial_capture.hard_reset`. Check a reset really happened
+  by looking for uptime near zero (`I (1281) ...`), not just for the absence of errors.
+
 - **2026-11-10, killing OpenOCD makes the NEXT firmware panic with "Breakpoint"** (C3, IDF v6.0.3): after a `gdb`
   session, flashing/running any firmware gave an endless `Guru Meditation Error: ... (Breakpoint)` loop. The serial
   log shows `Setting breakpoint at 0x4201xxxx and returning...`, and addr2line puts that address in

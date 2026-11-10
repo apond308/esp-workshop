@@ -1,6 +1,5 @@
-// blink-led: find out how the onboard LED is wired on the SuperMini Plus.
-// Drives LED_GPIO low for 2 s, then high for 2 s, forever, logging each level.
-// A human reports which level lights the LED (-> active-low or active-high).
+// blink-led: blinks the onboard LED of the TENSTAR ESP32-C3 SuperMini Plus at 1 Hz.
+// The LED is on GPIO8 and is active-HIGH (verified on this board; see docs/boards/).
 
 #include <inttypes.h>
 #include "freertos/FreeRTOS.h"
@@ -8,7 +7,10 @@
 #include "driver/gpio.h"
 #include "esp_log.h"
 
-#define LED_GPIO GPIO_NUM_8   // candidate; also a strapping pin (must stay high at reset)
+#define LED_GPIO      GPIO_NUM_8
+#define LED_ON_LEVEL  1            // active-high; set to 0 for boards with an active-low LED
+#define LED_OFF_LEVEL (!LED_ON_LEVEL)
+#define HALF_PERIOD_MS 500
 
 static const char *TAG = "blink";
 
@@ -19,14 +21,15 @@ void app_main(void)
         .mode = GPIO_MODE_OUTPUT,
     };
     ESP_ERROR_CHECK(gpio_config(&cfg));
-    ESP_LOGI(TAG, "driving GPIO%d: 2 s LOW, 2 s HIGH, repeating", LED_GPIO);
+    ESP_LOGI(TAG, "blinking LED on GPIO%d at %d Hz", LED_GPIO, 1000 / (2 * HALF_PERIOD_MS));
 
     for (uint32_t n = 0;; n++) {
-        ESP_ERROR_CHECK(gpio_set_level(LED_GPIO, 0));
-        ESP_LOGI(TAG, "alive: cycle %" PRIu32 " GPIO%d = LOW", n, LED_GPIO);
-        vTaskDelay(pdMS_TO_TICKS(2000));
-        ESP_ERROR_CHECK(gpio_set_level(LED_GPIO, 1));
-        ESP_LOGI(TAG, "alive: cycle %" PRIu32 " GPIO%d = HIGH", n, LED_GPIO);
-        vTaskDelay(pdMS_TO_TICKS(2000));
+        ESP_ERROR_CHECK(gpio_set_level(LED_GPIO, LED_ON_LEVEL));
+        vTaskDelay(pdMS_TO_TICKS(HALF_PERIOD_MS));
+        ESP_ERROR_CHECK(gpio_set_level(LED_GPIO, LED_OFF_LEVEL));
+        vTaskDelay(pdMS_TO_TICKS(HALF_PERIOD_MS));
+        if (n % 5 == 0) {   // log every 5th blink; per-blink logging is noise
+            ESP_LOGI(TAG, "alive: blink %" PRIu32, n);
+        }
     }
 }
