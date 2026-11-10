@@ -289,6 +289,26 @@ def capture(env: dict, project: Path, port: str, seconds: float, until: str | No
 
 
 # ----------------------------------------------------------------------------- commands
+def windows_jtag_driver_ok() -> bool:
+    """True if every Espressif USB-JTAG interface (MI_02) has a device-interface GUID (what libusb needs)."""
+    import winreg
+    base = r"SYSTEM\CurrentControlSet\Enum\USB\VID_303A&PID_1001&MI_02"
+    try:
+        root = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, base)
+    except OSError:
+        return True  # no such device known (e.g. a different PID): nothing to judge
+    ok = True
+    for i in range(winreg.QueryInfoKey(root)[0]):
+        inst = winreg.EnumKey(root, i)
+        try:
+            with winreg.OpenKey(root, inst + r"\Device Parameters") as k:
+                guid = winreg.QueryValueEx(k, "DeviceInterfaceGUIDs")[0]
+                ok = ok and bool(guid)
+        except OSError:
+            ok = False
+    return ok
+
+
 def cmd_doctor(a) -> int:
     ok = True
 
@@ -318,6 +338,12 @@ def cmd_doctor(a) -> int:
         if boards:
             for b in boards:
                 print(f"  OK    board: {b['port']} ({b['kind']}, {b['vid']}:{b['pid']})")
+            if IS_WIN and any(b["vid"] == "303A" for b in boards):
+                check(windows_jtag_driver_ok(),
+                      "Windows JTAG driver: Espressif driver bound (GDB/OpenOCD can open the device)",
+                      "JTAG interface uses Windows' generic WinUSB, so OpenOCD fails with LIBUSB_ERROR_NOT_FOUND. "
+                      "Run `eim install-drivers` from an elevated shell, then replug. If it's still generic, remove the device "
+                      "node (`pnputil /remove-device <MI_02 instance>` + `pnputil /scan-devices`, elevated). See docs/lessons.md")
         else:
             print("  --    no board plugged in (fine for building)")
     if platform.system() == "Linux":
@@ -454,6 +480,9 @@ def cmd_gdb(a) -> int:
                 ex.append(f"thbreak {b}" if not a.break_ else f"break {b}")
             ex.append("continue")
         ex += a.ex or ["bt", "info threads", "info locals"]
+        # Always clear hardware breakpoints/watchpoints before detaching: the CPU's debug triggers survive a core reset,
+        # so a leftover one makes whatever firmware runs next panic with "Breakpoint" (ebreak) and no debugger attached.
+        ex.append("delete")
         if not a.leave_halted:
             ex.append("monitor reset run" if not a.attach else "monitor resume")
         cmd = [gdb, "-q", "-batch", "-nx"] + sum((["-ex", e] for e in ex), []) + [str(elf)]

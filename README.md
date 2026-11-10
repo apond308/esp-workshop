@@ -25,7 +25,9 @@ You need Python 3.9+ and git, then the **ESP-IDF Installation Manager (EIM)**, t
 winget install Espressif.EIM-CLI
 python tools/esp.py setup        # installs the pinned ESP-IDF into C:\Espressif (several GB)
 ```
-If the board isn't recognised for JTAG, run `eim install-drivers` once.
+For JTAG debugging (`esp.py gdb`) you must also install Espressif's USB drivers: run `eim install-drivers` from an
+**elevated** PowerShell. If `esp.py doctor` still reports the generic WinUSB driver afterwards, unplugging isn't
+enough: remove the device node and rescan (see `docs/lessons.md`). Flashing and serial work without any of this.
 
 **macOS**
 ```bash

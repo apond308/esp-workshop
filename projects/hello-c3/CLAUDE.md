@@ -17,8 +17,9 @@ work on the board. Also verify the board facts in `docs/boards/tenstar-esp32c3-s
 | | | |
 
 ## Status
-- 2026-11-10: builds on Windows (IDF v6.0.3). Not yet flashed; no board attached so far.
-- Next: flash, check the `alive:` heartbeat, then test crash capture, `coredump` and `gdb`.
+- 2026-11-10: builds on Windows (IDF v6.0.3), flashes to the SuperMini Plus (COM3, native USB), heartbeat verified.
+  The workshop's crash decoding, `coredump` and `gdb` were verified on hardware with a throwaway crashing project
+  (since deleted). Board is a bring-up fixture only; start real projects with `esp.py new`.
 
 ## Project-specific notes
 - _Quirks, decisions, measurements. Move anything useful beyond this project into `docs/`._
