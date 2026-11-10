@@ -1,0 +1,24 @@
+# ESP-IDF build output (regenerated from sdkconfig.defaults on every machine)
+build/
+sdkconfig
+sdkconfig.old
+managed_components/
+
+# Serial / GDB captures
+logs/
+
+# Local tool state (cached IDF environment, etc.)
+.workshop/
+
+# Secrets: keep real values out of git; commit *.example files instead
+secrets.h
+secrets.ini
+.env
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc

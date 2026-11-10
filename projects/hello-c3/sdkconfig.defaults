@@ -1,0 +1,21 @@
+# Source of truth for this project's configuration. The generated `sdkconfig`
+# is gitignored and is rebuilt from this file by `esp.py build` whenever it changes.
+# Every key here is verified after each build; esp.py warns if one did not take effect.
+
+# --- Chip / flash ---
+CONFIG_IDF_TARGET="esp32c3"
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+
+# --- Debuggability (agent-friendly defaults; relax for production builds) ---
+# -Og: debuggable optimisation, variables mostly visible in GDB
+CONFIG_COMPILER_OPTIMIZATION_DEBUG=y
+# RISC-V: frame pointers give a real "Backtrace:" line on panic, decodable by addr2line
+CONFIG_ESP_SYSTEM_USE_FRAME_POINTER=y
+# Save a core dump (ELF format, the only one in IDF v6) to flash on crash; read it back with `esp.py coredump`
+CONFIG_ESP_COREDUMP_ENABLE_TO_FLASH=y
+# Catch stack overflows and heap corruption early
+CONFIG_COMPILER_STACK_CHECK_MODE_NORM=y
+CONFIG_FREERTOS_WATCHPOINT_END_OF_STACK=y
+CONFIG_HEAP_POISONING_LIGHT=y

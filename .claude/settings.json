@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python tools/esp.py *)",
+      "Bash(python3 tools/esp.py *)",
+      "PowerShell(python tools/esp.py *)"
+    ],
+    "ask": [
+      "Bash(python tools/esp.py idf * erase*)",
+      "Bash(python3 tools/esp.py idf * erase*)",
+      "PowerShell(python tools/esp.py idf * erase*)"
+    ],
+    "deny": [
+      "Bash(*espefuse*)",
+      "PowerShell(*espefuse*)",
+      "Bash(*efuse*burn*)",
+      "PowerShell(*efuse*burn*)"
+    ]
+  }
+}

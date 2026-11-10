@@ -1,0 +1,9 @@
+# Same line endings on every OS (CRLF breaks shell scripts and some IDF tooling)
+* text=auto eol=lf
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.bin binary
+*.elf binary
+*.png binary
+*.jpg binary
+*.pdf binary

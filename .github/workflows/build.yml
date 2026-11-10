@@ -1,0 +1,42 @@
+name: build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      idf: ${{ steps.v.outputs.idf }}
+      projects: ${{ steps.p.outputs.projects }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: v
+        run: echo "idf=$(tr -d '[:space:]' < .idf-version)" >> "$GITHUB_OUTPUT"
+      - id: p
+        # every projects/<name> and templates/<name> with a CMakeLists.txt
+        run: |
+          list=$(ls -d projects/*/CMakeLists.txt templates/*/CMakeLists.txt 2>/dev/null | xargs -r -n1 dirname | jq -R . | jq -cs .)
+          echo "projects=${list:-[]}" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: discover
+    if: needs.discover.outputs.projects != '[]'
+    runs-on: ubuntu-latest
+    container: espressif/idf:${{ needs.discover.outputs.idf }}
+    strategy:
+      fail-fast: false
+      matrix:
+        project: ${{ fromJSON(needs.discover.outputs.projects) }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build ${{ matrix.project }}
+        shell: bash
+        run: |
+          . "$IDF_PATH/export.sh" > /dev/null
+          cd "${{ matrix.project }}"
+          sed -i 's/__PROJECT_NAME__/template_ci/' CMakeLists.txt
+          target=$(sed -n 's/^CONFIG_IDF_TARGET="\(.*\)"/\1/p' sdkconfig.defaults)
+          IDF_TARGET="$target" idf.py build
