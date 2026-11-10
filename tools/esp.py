@@ -441,6 +441,33 @@ def cmd_monitor(a) -> int:
     return capture(env, project, port, a.seconds, a.until, reset=a.reset)
 
 
+def stop_openocd(ocd: subprocess.Popen) -> None:
+    """Shut OpenOCD down gracefully (its `shutdown` command over the telnet port).
+
+    Killing it instead leaves the chip's debug module active. ESP-IDF reads that bit as "a debugger is attached",
+    so the NEXT firmware to run asks the (absent) debugger for watchpoints via semihosting `ebreak` and panics
+    with "Breakpoint", even after a core reset. Graceful shutdown deactivates the debug module.
+    """
+    import socket
+    try:
+        with socket.create_connection(("127.0.0.1", 4444), timeout=3) as s:
+            s.sendall(b"shutdown\n")
+            time.sleep(0.3)
+    except OSError:
+        pass
+    try:
+        ocd.wait(timeout=8)
+        return
+    except subprocess.TimeoutExpired:
+        say("WARNING: OpenOCD did not shut down gracefully; killing it. The chip may still think a debugger is "
+            "attached: if the next firmware panics with 'Breakpoint', unplug and replug the board.")
+        ocd.terminate()
+        try:
+            ocd.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            ocd.kill()
+
+
 def cmd_gdb(a) -> int:
     project = resolve_project(a.project)
     env = idf_env()
@@ -497,11 +524,7 @@ def cmd_gdb(a) -> int:
         print(text)
         return 0
     finally:
-        ocd.terminate()
-        try:
-            ocd.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            ocd.kill()
+        stop_openocd(ocd)
 
 
 def cmd_coredump(a) -> int:

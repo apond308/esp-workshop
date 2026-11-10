@@ -17,13 +17,17 @@ Format: `- **YYYY-MM-DD, <topic>** (<board/project>): symptom → cause → fix.
   `pnputil /remove-device "USB\VID_303A&PID_1001&MI_02\<instance>"` then `pnputil /scan-devices`. Check with
   `esp.py doctor` (it now tests for this) or `DEVPKEY_Device_DriverInfPath` = `oem*.inf` (libwdi/Espressif), not `winusb.inf`.
 
-- **2026-11-10, leftover GDB breakpoint makes the NEXT firmware panic with "Breakpoint"** (C3, OpenOCD): after a
-  `gdb` session that set a hardware breakpoint, flashing a different program gave an endless
-  `Guru Meditation Error: ... (Breakpoint)` loop with no backtrace. The RISC-V debug triggers live in the CPU and
-  survive a core reset, so the stale trigger fires (ebreak) when the new code reaches that address with no debugger
-  attached. A later session may also fail with "No hardware breakpoint support in the target" (all slots used).
-  Fix: `esp.py gdb` now always runs `delete` before detaching. To recover a board already stuck in this state, run
-  any `esp.py gdb <project> --ex "bt"` (OpenOCD re-initialises the triggers) or unplug/replug the board.
+- **2026-11-10, killing OpenOCD makes the NEXT firmware panic with "Breakpoint"** (C3, IDF v6.0.3): after a `gdb`
+  session, flashing/running any firmware gave an endless `Guru Meditation Error: ... (Breakpoint)` loop. The serial
+  log shows `Setting breakpoint at 0x4201xxxx and returning...`, and addr2line puts that address in
+  `esp_cpu_set_watchpoint` (cpu.c:156, a `semihosting_call_noerrno`). Cause: on the C3, `esp_cpu_dbgr_is_attached()`
+  reads the debug module's "active" bit. If OpenOCD is killed (not shut down) that bit stays set across core resets,
+  so IDF believes a debugger is attached and asks it, via an `ebreak` semihosting call, to set the stack-end
+  watchpoint (`CONFIG_FREERTOS_WATCHPOINT_END_OF_STACK`). Nobody answers, so it panics. Only the debug module
+  being deactivated (graceful OpenOCD `shutdown`) or a full power cycle clears it.
+  Fix: `esp.py gdb` now stops OpenOCD with `shutdown` over its telnet port (and also runs `delete` first). If the
+  fallback kill path ever triggers, `esp.py` warns; recover by running one more `gdb` session or by replugging.
+  (My first diagnosis, stale hardware breakpoint triggers, was wrong. The `delete` only treats a related symptom.)
 
 - **2026-11-10, early boot output is lost on native-USB boards**: the USB port drops on chip reset, so the first
   ~0.3 s of boot log (including bootloader lines) can be missed. `monitor --reset` recovers most of it. For the
