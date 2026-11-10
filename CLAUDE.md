@@ -6,7 +6,8 @@ the board is plugged into whichever machine you're on, and the commands are iden
 - `templates/`: starting points. Each is a complete ESP-IDF project with debug-friendly config.
 - `projects/<name>/`: one folder per firmware project. Each has its own `CLAUDE.md` (goal, board, pin map, status).
 - `tools/esp.py`: **the only entry point you need.** It loads the pinned ESP-IDF itself (version in `.idf-version`).
-- `docs/`: shared knowledge. Chip notes and `lessons.md`, which is the workshop's long-term memory.
+- `docs/`: shared knowledge. Chip notes, `boards/<board>.md` (one per physical board model; verified pinout and
+  quirks), and `lessons.md`, which is the workshop's long-term memory.
 
 ## Commands (run from the repo root; `python3` on macOS/Linux)
 | Task | Command |

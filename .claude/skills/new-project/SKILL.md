@@ -13,6 +13,7 @@ description: Create a new ESP32 firmware project in this workshop from a templat
 2. `python tools/esp.py list` to see the templates. Pick the one matching the chip (`esp32c3-idf` for the C3).
 3. `python tools/esp.py new <name> --board "<board>" [--template <t>]`
 4. Fill in `projects/<name>/CLAUDE.md`: goal, board, USB type, pin map table, and an initial Status.
+   Link the board's `docs/boards/<board>.md`. If that file doesn't exist, create it and mark every fact unverified.
    Check every pin against `docs/esp32c3.md` (strapping, flash and USB pins) and flag conflicts to the user.
 5. `python tools/esp.py build <name>`. The build must pass and the config check must say all settings were applied.
 6. If a board is attached: `python tools/esp.py flash <name> --until "alive:"`. Confirm the heartbeat line appears.
